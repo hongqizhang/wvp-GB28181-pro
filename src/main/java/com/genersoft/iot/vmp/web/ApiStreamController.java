@@ -1,18 +1,14 @@
 package com.genersoft.iot.vmp.web;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
-import com.genersoft.iot.vmp.vmanager.play.PlayController;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,7 +25,7 @@ public class ApiStreamController {
     private SIPCommander cmder;
 
     @Autowired
-    private IVideoManagerStorager storager;
+    private VideoManagerStoragerServiceImpl storager;
 
     /**
      * 实时直播 - 开始直播

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 
 @CrossOrigin
 @RestController
@@ -26,7 +26,7 @@ public class PtzController {
 	private SIPCommander cmder;
 	
 	@Autowired
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 
 	/***
 	 * http://localhost:8080/api/ptz/34020000001320000002_34020000001320000008?leftRight=1&upDown=0&inOut=0&moveSpeed=50&zoomSpeed=0

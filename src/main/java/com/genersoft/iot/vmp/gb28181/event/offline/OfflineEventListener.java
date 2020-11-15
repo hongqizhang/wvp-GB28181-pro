@@ -7,8 +7,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 import com.genersoft.iot.vmp.common.VideoManagerConstants;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
-import com.genersoft.iot.vmp.utils.redis.RedisUtil;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 
 /**
  * @Description: 离线事件监听器，监听到离线后，修改设备离在线状态。 设备离线有两个来源：
@@ -23,7 +22,7 @@ public class OfflineEventListener implements ApplicationListener<OfflineEvent> {
 	private final static Logger logger = LoggerFactory.getLogger(OfflineEventListener.class);
 	
 	@Autowired
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 	
 	@Autowired
     private RedisUtil redis;

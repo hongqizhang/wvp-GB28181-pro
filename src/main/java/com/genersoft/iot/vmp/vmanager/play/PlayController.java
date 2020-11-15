@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 
 @CrossOrigin
 @RestController
@@ -33,7 +33,7 @@ public class PlayController {
 	private SIPCommander cmder;
 
 	@Autowired
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 
 	@Autowired
 	private ZLMRESTfulUtils zlmresTfulUtils;

@@ -5,7 +5,17 @@ public class DeviceChannel {
 	/**
 	 * 通道id
 	 */
+	private int id;
+
+	/**
+	 * 通道国标id
+	 */
 	private String channelId;
+
+	/**
+	 *  所属设备的国标id
+	 */
+	private String deviceId;
 	
 	/**
 	 * 通道名
@@ -139,19 +149,15 @@ public class DeviceChannel {
 	private int subCount;
 
 	/**
-	 * 流唯一编号，存在表示正在直播
-	 */
-	private String  ssrc;
-
-	/**
 	 *  是否含有音频
 	 */
 	private  boolean hasAudio;
 
 	/**
-	 *  是否正在播放
+	 *  有流则说明正在直播
 	 */
-	private  boolean play;
+	private String ssrc;
+
 
 
 	public void setPTZType(int PTZType) {
@@ -175,12 +181,22 @@ public class DeviceChannel {
 		}
 	}
 
+
+
 	public String getChannelId() {
 		return channelId;
 	}
 
 	public void setChannelId(String channelId) {
 		this.channelId = channelId;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
 	}
 
 	public String getName() {
@@ -379,12 +395,12 @@ public class DeviceChannel {
 		this.subCount = subCount;
 	}
 
-	public String getSsrc() {
-		return ssrc;
+	public int getId() {
+		return id;
 	}
 
-	public void setSsrc(String ssrc) {
-		this.ssrc = ssrc;
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	public boolean isHasAudio() {
@@ -395,11 +411,11 @@ public class DeviceChannel {
 		this.hasAudio = hasAudio;
 	}
 
-	public boolean isPlay() {
-		return play;
+	public String getSsrc() {
+		return ssrc;
 	}
 
-	public void setPlay(boolean play) {
-		this.play = play;
+	public void setSsrc(String ssrc) {
+		this.ssrc = ssrc;
 	}
 }

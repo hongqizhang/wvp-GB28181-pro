@@ -23,10 +23,9 @@ import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.gb28181.auth.DigestServerAuthenticationHelper;
 import com.genersoft.iot.vmp.gb28181.auth.RegisterLogicHandler;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
-import com.genersoft.iot.vmp.gb28181.bean.Host;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.transmit.request.SIPRequestAbstractProcessor;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 
 import gov.nist.javax.sip.address.AddressImpl;
 import gov.nist.javax.sip.address.SipUri;
@@ -43,7 +42,7 @@ public class RegisterRequestProcessor extends SIPRequestAbstractProcessor {
 	
 	private RegisterLogicHandler handler;
 	
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 	
 	private EventPublisher publisher;
 	
@@ -160,7 +159,7 @@ public class RegisterRequestProcessor extends SIPRequestAbstractProcessor {
 		this.handler = handler;
 	}
 
-	public void setVideoManagerStorager(IVideoManagerStorager storager) {
+	public void setVideoManagerStorager(VideoManagerStoragerServiceImpl storager) {
 		this.storager = storager;
 	}
 

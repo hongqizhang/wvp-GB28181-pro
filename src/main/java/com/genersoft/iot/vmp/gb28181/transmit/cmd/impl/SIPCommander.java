@@ -8,19 +8,17 @@ import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.InvalidArgumentException;
 import javax.sip.SipException;
-import javax.sip.SipFactory;
 import javax.sip.SipProvider;
 import javax.sip.TransactionDoesNotExistException;
 import javax.sip.address.SipURI;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 
-import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.MediaServerConfig;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.media.zlm.ZLMUtils;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +49,7 @@ public class SIPCommander implements ISIPCommander {
 	private VideoStreamSessionManager streamSession;
 
 	@Autowired
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 	
 	@Autowired
 	@Qualifier(value="tcpSipProvider")

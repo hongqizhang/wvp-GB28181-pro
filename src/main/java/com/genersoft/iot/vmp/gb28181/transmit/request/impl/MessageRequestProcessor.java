@@ -16,7 +16,6 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.genersoft.iot.vmp.common.VideoManagerConstants;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
@@ -31,8 +30,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.request.SIPRequestAbstractProcessor;
 import com.genersoft.iot.vmp.gb28181.utils.DateUtil;
 import com.genersoft.iot.vmp.gb28181.utils.XmlUtil;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
-import com.genersoft.iot.vmp.utils.redis.RedisUtil;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 import org.springframework.util.StringUtils;
 import com.genersoft.iot.vmp.common.StreamInfo;
 /**
@@ -46,7 +44,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 
 	private SIPCommander cmder;
 
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 
 	private EventPublisher publisher;
 
@@ -451,7 +449,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 		this.cmder = cmder;
 	}
 
-	public void setStorager(IVideoManagerStorager storager) {
+	public void setStorager(VideoManagerStoragerServiceImpl storager) {
 		this.storager = storager;
 	}
 

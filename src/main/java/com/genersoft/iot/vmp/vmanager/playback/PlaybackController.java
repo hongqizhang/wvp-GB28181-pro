@@ -13,14 +13,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 
 @CrossOrigin
 @RestController
@@ -33,7 +32,7 @@ public class PlaybackController {
 	private SIPCommander cmder;
 	
 	@Autowired
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 
 	@Autowired
 	private ZLMRESTfulUtils zlmresTfulUtils;

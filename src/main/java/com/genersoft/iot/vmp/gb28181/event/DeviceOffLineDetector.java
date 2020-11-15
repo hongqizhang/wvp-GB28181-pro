@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.genersoft.iot.vmp.common.VideoManagerConstants;
-import com.genersoft.iot.vmp.utils.redis.RedisUtil;
 
 /**    
  * @Description:设备离在线状态检测器，用于检测设备状态

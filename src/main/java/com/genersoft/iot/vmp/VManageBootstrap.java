@@ -5,8 +5,10 @@ import java.util.logging.LogManager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import tk.mybatis.spring.annotation.MapperScan;
 
 @SpringBootApplication
+@MapperScan("com.genersoft.iot.vmp")
 public class VManageBootstrap extends LogManager {
 	public static void main(String[] args) {
 		SpringApplication.run(VManageBootstrap.class, args);

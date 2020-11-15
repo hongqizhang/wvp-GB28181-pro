@@ -7,11 +7,9 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import com.alibaba.fastjson.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.genersoft.iot.vmp.conf.SipConfig;
@@ -34,9 +32,8 @@ import com.genersoft.iot.vmp.gb28181.transmit.response.impl.ByeResponseProcessor
 import com.genersoft.iot.vmp.gb28181.transmit.response.impl.CancelResponseProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.response.impl.InviteResponseProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.response.impl.OtherResponseProcessor;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
+import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
 import com.genersoft.iot.vmp.utils.SpringBeanFactory;
-import com.genersoft.iot.vmp.utils.redis.RedisUtil;
 
 /**    
  * @Description:TODO(这里用一句话描述这个类的作用)   
@@ -55,7 +52,7 @@ public class SIPProcessorFactory {
 	private RegisterLogicHandler handler;
 	
 	@Autowired
-	private IVideoManagerStorager storager;
+	private VideoManagerStoragerServiceImpl storager;
 	
 	@Autowired
 	private EventPublisher publisher;
