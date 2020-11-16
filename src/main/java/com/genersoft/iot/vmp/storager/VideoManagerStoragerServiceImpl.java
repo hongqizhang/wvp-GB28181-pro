@@ -46,6 +46,11 @@ public class VideoManagerStoragerServiceImpl implements VideoManagerStoragerServ
 	}
 
 	@Override
+	public boolean isOnline(String deviceId) {
+		return storageMapper.queryVideoDevice(deviceId).getOnline() == 1;
+	}
+
+	@Override
 	public boolean create(Device device) {
 		return storageMapper.addDevice(device) > 0;
 	}
@@ -89,16 +94,16 @@ public class VideoManagerStoragerServiceImpl implements VideoManagerStoragerServ
 	}
 
 	@Override
-	public PageInfo<Device> queryVideoDeviceList(int page, int count) {
+	public PageInfo<Device> queryVideoDeviceList(String query, String online, int page, int count) {
 
 		PageHelper.startPage(page,count);
-		PageInfo<Device> pageInfo = new PageInfo<>(storageMapper.queryVideoDevices());
+		PageInfo<Device> pageInfo = new PageInfo<>(storageMapper.queryVideoDevices(query, online));
 		return pageInfo;
 	}
 
 	@Override
-	public List<Device> queryVideoDeviceList() {
-		return storageMapper.queryVideoDevices();
+	public List<Device> queryVideoDeviceList(String query, String online) {
+		return storageMapper.queryVideoDevices(query, online);
 	}
 
 	@Override
@@ -176,4 +181,8 @@ public class VideoManagerStoragerServiceImpl implements VideoManagerStoragerServ
 	public StreamInfo queryPlaybackBySSRC(String ssrc) {
 		return null;
 	}
+
+
+
+
 }

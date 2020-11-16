@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.gb28181.auth.RegisterLogicHandler;
-import com.genersoft.iot.vmp.gb28181.event.DeviceOffLineDetector;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
@@ -59,15 +58,10 @@ public class SIPProcessorFactory {
 	
 	@Autowired
 	private SIPCommander cmder;
-	
-	@Autowired
-	private RedisUtil redis;
-	
+
 	@Autowired
 	private DeferredResultHolder deferredResultHolder;
-	
-	@Autowired
-	private DeviceOffLineDetector offLineDetector;
+
 	
 	@Autowired
 	private InviteResponseProcessor inviteResponseProcessor;
@@ -130,9 +124,7 @@ public class SIPProcessorFactory {
 			processor.setTcpSipProvider(getTcpSipProvider());
 			processor.setUdpSipProvider(getUdpSipProvider());
 			processor.setPublisher(publisher);
-			processor.setRedis(redis);
 			processor.setDeferredResultHolder(deferredResultHolder);
-			processor.setOffLineDetector(offLineDetector);
 			processor.setCmder(cmder);
 			processor.setStorager(storager);
 			return processor;

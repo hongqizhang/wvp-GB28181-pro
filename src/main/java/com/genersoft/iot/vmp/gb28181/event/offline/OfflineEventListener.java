@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.gb28181.event.offline;
 
+import com.genersoft.iot.vmp.gb28181.event.online.OnlineEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +24,6 @@ public class OfflineEventListener implements ApplicationListener<OfflineEvent> {
 	
 	@Autowired
 	private VideoManagerStoragerServiceImpl storager;
-	
-	@Autowired
-    private RedisUtil redis;
 
 	@Override
 	public void onApplicationEvent(OfflineEvent event) {
@@ -34,23 +32,15 @@ public class OfflineEventListener implements ApplicationListener<OfflineEvent> {
 			logger.debug("设备离线事件触发，deviceId：" + event.getDeviceId() + ",from:" + event.getFrom());
 		}
 
-		String key = VideoManagerConstants.KEEPLIVEKEY_PREFIX + event.getDeviceId();
-
-		switch (event.getFrom()) {
-			// 心跳超时触发的离线事件，说明redis中已删除，无需处理
-			case VideoManagerConstants.EVENT_OUTLINE_TIMEOUT:
-				break;
-			// 设备主动注销触发的离线事件，需要删除redis中的超时监听
-			case VideoManagerConstants.EVENT_OUTLINE_UNREGISTER:
-				redis.del(key);
-				break;
-			default:
-				boolean exist = redis.hasKey(key);
-				if (exist) {
-					redis.del(key);
-				}
-		}
-
+//		switch (event.getFrom()) {
+//			// 心跳超时触发的离线事件，说明redis中已删除，无需处理
+//			case VideoManagerConstants.EVENT_OUTLINE_TIMEOUT:
+//			// 设备主动注销触发的离线事件，需要删除redis中的超时监听
+//			case VideoManagerConstants.EVENT_OUTLINE_UNREGISTER:
+//				break;
+//			default:
+//				storager.outline(event.getDeviceId());
+//		}
 		// 处理离线监听
 		storager.outline(event.getDeviceId());
 	}

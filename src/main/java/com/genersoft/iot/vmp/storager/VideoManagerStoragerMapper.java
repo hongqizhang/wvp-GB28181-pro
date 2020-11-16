@@ -88,8 +88,12 @@ public interface VideoManagerStoragerMapper {
      *
      * @return DShadow 设备对象
      */
-    @Select("SELECT de.*, (SELECT count(1) FROM channel WHERE deviceId == de.deviceId) as channelCount FROM device de")
-    public List<Device> queryVideoDevices();
+    @Select("<script> " +
+            "SELECT de.*, (SELECT count(1) FROM channel WHERE deviceId == de.deviceId) as channelCount FROM device de" +
+            "<if test='query != null'> and (deviceId like '%#{query}$' or name like '%#{query}$')</if>\n" +
+            "<if test='online != null'> and online == #{online} </if>\n" +
+            "</script>")
+    public List<Device> queryVideoDevices(String query, String online);
 
 
     /**

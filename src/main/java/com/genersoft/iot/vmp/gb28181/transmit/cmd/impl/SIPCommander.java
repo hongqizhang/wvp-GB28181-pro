@@ -319,8 +319,8 @@ public class SIPCommander implements ISIPCommander {
 
 			StreamInfo streamInfo = new StreamInfo();
 			streamInfo.setSsrc(ssrc);
-			streamInfo.setCahnnelId(channelId);
-			streamInfo.setDeviceID(device.getDeviceId());
+			streamInfo.setChannelId(channelId);
+			streamInfo.setDeviceId(device.getDeviceId());
 			storager.startPlay(streamInfo);
 			return streamInfo;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
@@ -386,8 +386,8 @@ public class SIPCommander implements ISIPCommander {
 
 			StreamInfo streamInfo = new StreamInfo();
 			streamInfo.setSsrc(ssrc);
-			streamInfo.setCahnnelId(channelId);
-			streamInfo.setDeviceID(device.getDeviceId());
+			streamInfo.setChannelId(channelId);
+			streamInfo.setDeviceId(device.getDeviceId());
 			boolean b = storager.startPlayback(streamInfo);
 			return streamInfo;
 

@@ -12,7 +12,6 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
-import com.genersoft.iot.vmp.gb28181.event.DeviceOffLineDetector;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
@@ -32,9 +31,7 @@ public class DeviceController {
 	
 	@Autowired
 	private DeferredResultHolder resultHolder;
-	
-	@Autowired
-	private DeviceOffLineDetector offLineDetector;
+
 	
 	@GetMapping("/devices/{deviceId}")
 	public ResponseEntity<Device> devices(@PathVariable String deviceId){
@@ -54,7 +51,7 @@ public class DeviceController {
 			logger.debug("查询所有视频设备API调用");
 		}
 		
-		return storager.queryVideoDeviceList( page, count);
+		return storager.queryVideoDeviceList(null, null, page, count);
 	}
 
 	/**
@@ -100,7 +97,7 @@ public class DeviceController {
 			logger.debug("设备信息删除API调用，deviceId：" + deviceId);
 		}
 		
-		if (offLineDetector.isOnline(deviceId)) {
+		if (storager.isOnline(deviceId)) {
 			return new ResponseEntity<String>("不允许删除在线设备！", HttpStatus.NOT_ACCEPTABLE);
 		}
 		boolean isSuccess = storager.delete(deviceId);

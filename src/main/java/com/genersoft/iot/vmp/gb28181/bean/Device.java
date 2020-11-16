@@ -1,9 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.bean;
 
 
-import java.sql.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.Date;
 
 public class Device {
 

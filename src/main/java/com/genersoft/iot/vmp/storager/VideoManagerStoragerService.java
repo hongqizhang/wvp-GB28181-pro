@@ -109,14 +109,14 @@ public interface VideoManagerStoragerService {
 	 *
 	 * @return List<Device> 设备对象数组
 	 */
-	public PageInfo<Device> queryVideoDeviceList( int page, int count);
+	public PageInfo<Device> queryVideoDeviceList( String query, String online, int page, int count);
 
 	/**
 	 * 获取多个设备
 	 *
 	 * @return List<Device> 设备对象数组
 	 */
-	public List<Device> queryVideoDeviceList();
+	public List<Device> queryVideoDeviceList(String query, String online);
 
 	/**
 	 * 删除设备
@@ -184,4 +184,6 @@ public interface VideoManagerStoragerService {
 	StreamInfo queryPlaybackByDevice(String deviceId, String channelId);
 
 	StreamInfo queryPlaybackBySSRC(String ssrc);
+
+    boolean isOnline(String deviceId);
 }

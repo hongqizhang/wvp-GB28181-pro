@@ -45,13 +45,11 @@ public class RegisterRequestProcessor extends SIPRequestAbstractProcessor {
 	private VideoManagerStoragerServiceImpl storager;
 	
 	private EventPublisher publisher;
-	
+
 	/***
-	 * 收到注册请求 处理
-	 * 
-	 * @param request
-	 *            请求消息
-	 */ 
+	 *  收到注册请求 处理
+	 * @param evt
+	 */
 	@Override
 	public void process(RequestEvent evt) {
 		try {
@@ -103,18 +101,15 @@ public class RegisterRequestProcessor extends SIPRequestAbstractProcessor {
 					received = viaHeader.getHost();
 					rPort = viaHeader.getPort();
 				}
-				//
-				Host host = new Host();
-				host.setIp(received);
-				host.setPort(rPort);
-				host.setAddress(received.concat(":").concat(String.valueOf(rPort)));
 				AddressImpl address = (AddressImpl) fromHeader.getAddress();
 				SipUri uri = (SipUri) address.getURI();
 				String deviceId = uri.getUser();
 				device = new Device();
 				device.setStreamMode("UDP");
 				device.setDeviceId(deviceId);
-				device.setHost(host);
+				device.setIp(received);
+				device.setPort(rPort);
+				device.setAddress(received.concat(":").concat(String.valueOf(rPort)));
 				// 注销成功
 				if (expiresHeader != null && expiresHeader.getExpires() == 0) {
 					registerFlag = 2;

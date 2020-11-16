@@ -10,6 +10,7 @@ import javax.sip.SipException;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import com.genersoft.iot.vmp.common.DataCatch;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -22,7 +23,6 @@ import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.bean.RecordInfo;
 import com.genersoft.iot.vmp.gb28181.bean.RecordItem;
-import com.genersoft.iot.vmp.gb28181.event.DeviceOffLineDetector;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
@@ -48,11 +48,8 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 
 	private EventPublisher publisher;
 
-	private RedisUtil redis;
-
 	private DeferredResultHolder deferredResultHolder;
 
-	private DeviceOffLineDetector offLineDetector;
 
 	private final static String CACHE_RECORDINFO_KEY = "CACHE_RECORDINFO_";
 
@@ -139,7 +136,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 			deferredResultHolder.invokeResult(msg);
 			// 回复200 OK
 			responseAck(evt);
-			if (offLineDetector.isOnline(deviceId)) {
+			if (storager.isOnline(deviceId)) {
 				publisher.onlineEventPublish(deviceId, VideoManagerConstants.EVENT_ONLINE_KEEPLIVE);
 			}
 		} catch (DocumentException | SipException | InvalidArgumentException | ParseException e) {
@@ -230,7 +227,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 				deferredResultHolder.invokeResult(msg);
 				// 回复200 OK
 				responseAck(evt);
-				if (offLineDetector.isOnline(deviceId)) {
+				if (storager.isOnline(deviceId)) {
 					publisher.onlineEventPublish(deviceId, VideoManagerConstants.EVENT_ONLINE_KEEPLIVE);
 				}
 			}
@@ -267,7 +264,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 			cmder.catalogQuery(device);
 			// 回复200 OK
 			responseAck(evt);
-			if (offLineDetector.isOnline(deviceId)) {
+			if (storager.isOnline(deviceId)) {
 				publisher.onlineEventPublish(deviceId, VideoManagerConstants.EVENT_ONLINE_KEEPLIVE);
 			}
 		} catch (DocumentException | SipException | InvalidArgumentException | ParseException e) {
@@ -287,7 +284,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 			String deviceId = XmlUtil.getText(rootElement, "DeviceID");
 			// 回复200 OK
 			responseAck(evt);
-			if (offLineDetector.isOnline(deviceId)) {
+			if (storager.isOnline(deviceId)) {
 				publisher.onlineEventPublish(deviceId, VideoManagerConstants.EVENT_ONLINE_KEEPLIVE);
 			} else {
 			}
@@ -297,7 +294,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 	}
 
 	/***
-	 * 收到catalog设备目录列表请求 处理 TODO 过期时间暂时写死180秒，后续与DeferredResult超时时间保持一致
+	 * 收到catalog设备目录列表请求 处理
 	 * 
 	 * @param evt
 	 */
@@ -356,21 +353,21 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 					// 为防止连续请求该设备的录像数据，返回数据错乱，特增加sn进行区分
 					String cacheKey = CACHE_RECORDINFO_KEY + deviceId + sn;
 					// TODO 暂时直接操作redis存储，后续封装专用缓存接口，改为本地内存缓存
-					if (redis.hasKey(cacheKey)) {
-						List<RecordItem> previousList = (List<RecordItem>) redis.get(cacheKey);
+					if (DataCatch.getInstance().hasKey(cacheKey)) {
+						List<RecordItem> previousList = (List<RecordItem>) DataCatch.getInstance().get(cacheKey);
 						if (previousList != null && previousList.size() > 0) {
 							recordList.addAll(previousList);
 						}
 						// 本分支表示录像列表被拆包，且加上之前的数据还是不够,保存缓存返回，等待下个包再处理
 						if (recordList.size() < recordInfo.getSumNum()) {
 							logger.info("已获取" + recordList.size() + "项录像数据，共" + recordInfo.getSumNum() + "项");
-							redis.set(cacheKey, recordList, 90);
+							DataCatch.getInstance().set(cacheKey, recordList, 90);
 							return;
 						} else {
 							// 本分支表示录像被拆包，但加上之前的数据够足够，返回响应
 							// 因设备心跳有监听redis过期机制，为提高性能，此处手动删除
 							logger.info("录像数据已全部获取");
-							redis.del(cacheKey);
+							DataCatch.getInstance().del(cacheKey);
 						}
 					} else {
 						// 本分支有两种可能：1、录像列表被拆包，且是第一个包,直接保存缓存返回，等待下个包再处理
@@ -378,7 +375,7 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 						logger.info("已获取" + recordList.size() + "项录像数据，共" + recordInfo.getSumNum() + "项");
 						logger.info("等待后续的包...");
 
-						redis.set(cacheKey, recordList, 90);
+						DataCatch.getInstance().set(cacheKey, recordList, 90);
 						return;
 					}
 				}
@@ -457,16 +454,9 @@ public class MessageRequestProcessor extends SIPRequestAbstractProcessor {
 		this.publisher = publisher;
 	}
 
-	public void setRedis(RedisUtil redis) {
-		this.redis = redis;
-	}
-
 	public void setDeferredResultHolder(DeferredResultHolder deferredResultHolder) {
 		this.deferredResultHolder = deferredResultHolder;
 	}
 
-	public void setOffLineDetector(DeviceOffLineDetector offLineDetector) {
-		this.offLineDetector = offLineDetector;
-	}
 
 }

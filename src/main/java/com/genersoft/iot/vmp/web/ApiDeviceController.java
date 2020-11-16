@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
-import com.genersoft.iot.vmp.gb28181.event.DeviceOffLineDetector;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.VideoManagerStoragerServiceImpl;
@@ -35,9 +34,6 @@ public class ApiDeviceController {
     @Autowired
     private DeferredResultHolder resultHolder;
 
-    @Autowired
-    private DeviceOffLineDetector offLineDetector;
-
     /**
      * 分页获取设备列表 TODO 现在直接返回，尚未实现分页
      * @param start
@@ -60,10 +56,10 @@ public class ApiDeviceController {
         JSONObject result = new JSONObject();
         List<Device> devices;
         if (start == null || limit ==null) {
-            devices = storager.queryVideoDeviceList();
+            devices = storager.queryVideoDeviceList(null, null);
             result.put("DeviceCount", devices.size());
         }else {
-            PageInfo<Device> deviceList = storager.queryVideoDeviceList(start/limit, limit);
+            PageInfo<Device> deviceList = storager.queryVideoDeviceList(null, null, start/limit, limit);
             result.put("DeviceCount", deviceList.getTotal());
             devices = deviceList.getList();
         }
