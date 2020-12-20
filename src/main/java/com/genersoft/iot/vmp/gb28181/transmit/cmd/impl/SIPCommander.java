@@ -277,17 +277,22 @@ public class SIPCommander implements ISIPCommander {
 		try {
 
 			String ssrc = streamSession.createPlaySsrc();
+			String streamId = null;
+			if (rtpEnable) {
+				streamId = String.format("gb_play_%s_%s", device.getDeviceId(), channelId);
+			}else {
+				streamId = String.format("%08x", Integer.parseInt(ssrc)).toUpperCase();
+			}
 			String streamMode = device.getStreamMode().toUpperCase();
 			MediaServerConfig mediaInfo = storager.getMediaInfo();
 			String mediaPort = null;
 			// 使用动态udp端口
 			if (rtpEnable) {
-				mediaPort = zlmUtils.getNewRTPPort(ssrc) + "";
+				mediaPort = zlmUtils.getNewRTPPort(streamId) + "";
 			}else {
 				mediaPort = mediaInfo.getRtpProxyPort();
 			}
 
-			String streamId = String.format("%08x", Integer.parseInt(ssrc)).toUpperCase();
 			// 添加订阅
 			JSONObject subscribeKey = new JSONObject();
 			subscribeKey.put("app", "rtp");
@@ -302,16 +307,22 @@ public class SIPCommander implements ISIPCommander {
 			content.append("c=IN IP4 "+mediaInfo.getWanIp()+"\r\n");
 			content.append("t=0 0\r\n");
 			if("TCP-PASSIVE".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 98 97\r\n");
+				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
 			}else if ("TCP-ACTIVE".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 98 97\r\n");
+				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
 			}else if("UDP".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" RTP/AVP 96 98 97\r\n");
+				content.append("m=video "+ mediaPort +" RTP/AVP 126 125 99 34 98 97 96\r\n");
 			}
 			content.append("a=recvonly\r\n");
-			content.append("a=rtpmap:96 PS/90000\r\n");
+			content.append("a=fmtp:126 profile-level-id=42e01e\r\n");
+			content.append("a=rtpmap:126 H264/90000\r\n");
+			content.append("a=rtpmap:125 H264S/90000\r\n");
+			content.append("a=fmtp:125 profile-level-id=42e01e\r\n");
+			content.append("a=rtpmap:99 MP4V-ES/90000\r\n");
+			content.append("a=fmtp:99 profile-level-id=3\r\n");
 			content.append("a=rtpmap:98 H264/90000\r\n");
 			content.append("a=rtpmap:97 MPEG4/90000\r\n");
+			content.append("a=rtpmap:96 PS/90000\r\n");
 			if("TCP-PASSIVE".equals(streamMode)){ // tcp被动模式
 				content.append("a=setup:passive\r\n");
 				content.append("a=connection:new\r\n");
@@ -324,10 +335,10 @@ public class SIPCommander implements ISIPCommander {
 			Request request = headerProvider.createInviteRequest(device, channelId, content.toString(), null, "live", null, ssrc);
 
 			ClientTransaction transaction = transmitRequest(device, request);
-			streamSession.put(ssrc, transaction);
+			streamSession.put(streamId, transaction);
 			DeviceChannel deviceChannel = storager.queryChannel(device.getDeviceId(), channelId);
 			if (deviceChannel != null) {
-				deviceChannel.setSsrc(ssrc);
+				deviceChannel.setStreamId(streamId);
 				storager.updateChannel(device.getDeviceId(), deviceChannel);
 			}
 
@@ -372,22 +383,28 @@ public class SIPCommander implements ISIPCommander {
 			String mediaPort = null;
 			// 使用动态udp端口
 			if (rtpEnable) {
-				mediaPort = zlmUtils.getNewRTPPort(ssrc) + "";
+				mediaPort = zlmUtils.getNewRTPPort(streamId) + "";
 			}else {
 				mediaPort = mediaInfo.getRtpProxyPort();
 			}
 			String streamMode = device.getStreamMode().toUpperCase();
 			if("TCP-PASSIVE".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 98 97\r\n");
+				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
 			}else if ("TCP-ACTIVE".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 98 97\r\n");
+				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
 			}else if("UDP".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" RTP/AVP 96 98 97\r\n");
+				content.append("m=video "+ mediaPort +" RTP/AVP 126 125 99 34 98 97 96\r\n");
 			}
-	        content.append("a=recvonly\r\n");
-	        content.append("a=rtpmap:96 PS/90000\r\n");
-	        content.append("a=rtpmap:98 H264/90000\r\n");
-	        content.append("a=rtpmap:97 MPEG4/90000\r\n");
+			content.append("a=recvonly\r\n");
+			content.append("a=fmtp:126 profile-level-id=42e01e\r\n");
+			content.append("a=rtpmap:126 H264/90000\r\n");
+			content.append("a=rtpmap:125 H264S/90000\r\n");
+			content.append("a=fmtp:125 profile-level-id=42e01e\r\n");
+			content.append("a=rtpmap:99 MP4V-ES/90000\r\n");
+			content.append("a=fmtp:99 profile-level-id=3\r\n");
+			content.append("a=rtpmap:98 H264/90000\r\n");
+			content.append("a=rtpmap:97 MPEG4/90000\r\n");
+			content.append("a=rtpmap:96 PS/90000\r\n");
 			if("TCP-PASSIVE".equals(streamMode)){ // tcp被动模式
 				content.append("a=setup:passive\r\n");
 				content.append("a=connection:new\r\n");
@@ -400,7 +417,7 @@ public class SIPCommander implements ISIPCommander {
 	        Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "playback", null);
 	
 	        ClientTransaction transaction = transmitRequest(device, request);
-	        streamSession.put(ssrc, transaction);
+	        streamSession.put(streamId, transaction);
 
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();
@@ -412,10 +429,10 @@ public class SIPCommander implements ISIPCommander {
 	 * 
 	 */
 	@Override
-	public void streamByeCmd(String ssrc) {
+	public void streamByeCmd(String streamId) {
 		
 		try {
-			ClientTransaction transaction = streamSession.get(ssrc);
+			ClientTransaction transaction = streamSession.get(streamId);
 			if (transaction == null) {
 				return;
 			}
@@ -441,7 +458,7 @@ public class SIPCommander implements ISIPCommander {
 				clientTransaction = udpSipProvider.getNewClientTransaction(byeRequest);
 			}
 			dialog.sendRequest(clientTransaction);
-			streamSession.remove(ssrc);
+			streamSession.remove(streamId);
 		} catch (TransactionDoesNotExistException e) {
 			e.printStackTrace();
 		} catch (SipException e) {

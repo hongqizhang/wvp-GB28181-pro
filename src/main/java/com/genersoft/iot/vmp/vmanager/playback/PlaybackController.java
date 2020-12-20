@@ -62,6 +62,7 @@ public class PlaybackController {
 		DeferredResult<ResponseEntity<String>> result = new DeferredResult<ResponseEntity<String>>();
 		// 超时处理
 		result.onTimeout(()->{
+			logger.warn(String.format("设备回放超时，deviceId：%s ，channelId：%s", deviceId, channelId));
 			RequestMessage msg = new RequestMessage();
 			msg.setId(DeferredResultHolder.CALLBACK_CMD_PlAY + uuid);
 			msg.setData("Timeout");
@@ -71,7 +72,7 @@ public class PlaybackController {
 		StreamInfo streamInfo = storager.queryPlaybackByDevice(deviceId, channelId);
 		if (streamInfo != null) {
 			// 停止之前的回放
-			cmder.streamByeCmd(streamInfo.getSsrc());
+			cmder.streamByeCmd(streamInfo.getStreamId());
 		}
 		resultHolder.put(DeferredResultHolder.CALLBACK_CMD_PlAY + uuid, result);
 		cmder.playbackStreamCmd(device, channelId, startTime, endTime, (JSONObject response) -> {

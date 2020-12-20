@@ -64,6 +64,7 @@ public class PlayController {
 		DeferredResult<ResponseEntity<String>> result = new DeferredResult<ResponseEntity<String>>();
 		// 超时处理
 		result.onTimeout(()->{
+			logger.warn(String.format("设备点播超时，deviceId：%s ，channelId：%s", deviceId, channelId));
 			RequestMessage msg = new RequestMessage();
 			msg.setId(DeferredResultHolder.CALLBACK_CMD_PlAY + uuid);
 			msg.setData("Timeout");
@@ -73,13 +74,13 @@ public class PlayController {
 		resultHolder.put(DeferredResultHolder.CALLBACK_CMD_PlAY + uuid, result);
 
 		if (streamInfo == null) {
-			// TODO playStreamCmd 超时处理
+			// 发送点播消息
 			cmder.playStreamCmd(device, channelId, (JSONObject response) -> {
 				logger.info("收到订阅消息： " + response.toJSONString());
 				playService.onPublishHandlerForPlay(response, deviceId, channelId, uuid.toString());
 			});
 		} else {
-			String streamId = String.format("%08x", Integer.parseInt(streamInfo.getSsrc())).toUpperCase();
+			String streamId = streamInfo.getStreamId();
 			JSONObject rtpInfo = zlmresTfulUtils.getRtpInfo(streamId);
 			if (rtpInfo.getBoolean("exist")) {
 				RequestMessage msg = new RequestMessage();
@@ -98,21 +99,21 @@ public class PlayController {
 		return result;
 	}
 
-	@PostMapping("/play/{ssrc}/stop")
-	public ResponseEntity<String> playStop(@PathVariable String ssrc) {
+	@PostMapping("/play/{streamId}/stop")
+	public ResponseEntity<String> playStop(@PathVariable String streamId) {
 
-		cmder.streamByeCmd(ssrc);
-		StreamInfo streamInfo = storager.queryPlayBySSRC(ssrc);
+		cmder.streamByeCmd(streamId);
+		StreamInfo streamInfo = storager.queryPlayByStreamId(streamId);
 		if (streamInfo == null)
-			return new ResponseEntity<String>("ssrc not found", HttpStatus.OK);
+			return new ResponseEntity<String>("streamId not found", HttpStatus.OK);
 		storager.stopPlay(streamInfo);
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("设备预览停止API调用，ssrc：%s", ssrc));
+			logger.debug(String.format("设备预览停止API调用，streamId：%s", streamId));
 		}
 
-		if (ssrc != null) {
+		if (streamId != null) {
 			JSONObject json = new JSONObject();
-			json.put("ssrc", ssrc);
+			json.put("streamId", streamId);
 			return new ResponseEntity<String>(json.toString(), HttpStatus.OK);
 		} else {
 			logger.warn("设备预览停止API调用失败！");
@@ -122,17 +123,16 @@ public class PlayController {
 
 	/**
 	 * 将不是h264的视频通过ffmpeg 转码为h264 + aac
-	 * @param ssrc
+	 * @param streamId 流ID
 	 * @return
 	 */
-	@PostMapping("/play/{ssrc}/convert")
-	public ResponseEntity<String> playConvert(@PathVariable String ssrc) {
-		StreamInfo streamInfo = storager.queryPlayBySSRC(ssrc);
+	@PostMapping("/play/{streamId}/convert")
+	public ResponseEntity<String> playConvert(@PathVariable String streamId) {
+		StreamInfo streamInfo = storager.queryPlayByStreamId(streamId);
 		if (streamInfo == null) {
 			logger.warn("视频转码API调用失败！, 视频流已经停止!");
 			return new ResponseEntity<String>("未找到视频流信息, 视频流可能已经停止", HttpStatus.OK);
 		}
-		String streamId = String.format("%08x", Integer.parseInt(ssrc)).toUpperCase();
 		JSONObject rtpInfo = zlmresTfulUtils.getRtpInfo(streamId);
 		if (!rtpInfo.getBoolean("exist")) {
 			logger.warn("视频转码API调用失败！, 视频流已停止推流!");
@@ -141,7 +141,8 @@ public class PlayController {
 			MediaServerConfig mediaInfo = storager.getMediaInfo();
 			String dstUrl = String.format("rtmp://%s:%s/convert/%s", "127.0.0.1", mediaInfo.getRtmpPort(),
 					streamId );
-			JSONObject jsonObject = zlmresTfulUtils.addFFmpegSource(streamInfo.getRtsp(), dstUrl, "1000000");
+			String srcUrl = String.format("rtsp://%s:%s/rtp/%s", "127.0.0.1", mediaInfo.getRtspPort(), streamId);
+			JSONObject jsonObject = zlmresTfulUtils.addFFmpegSource(srcUrl, dstUrl, "1000000");
 			System.out.println(jsonObject);
 			JSONObject result = new JSONObject();
 			if (jsonObject != null && jsonObject.getInteger("code") == 0) {
