@@ -11,6 +11,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.MediaServerConfig;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
+import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
 import com.genersoft.iot.vmp.utils.IpUtil;
 import com.genersoft.iot.vmp.vmanager.service.IPlayService;
@@ -51,6 +52,9 @@ public class ZLMHttpHookListener {
 
 	@Autowired
 	private IVideoManagerStorager storager;
+
+	@Autowired
+	private IRedisCatchStorage redisCatchStorage;
 
 	@Autowired
 	private ZLMRESTfulUtils zlmresTfulUtils;
@@ -249,13 +253,13 @@ public class ZLMHttpHookListener {
 		String app = json.getString("app");
 		String streamId = json.getString("stream");
 		boolean regist = json.getBoolean("regist");
-		StreamInfo streamInfo = storager.queryPlayByStreamId(streamId);
+		StreamInfo streamInfo = redisCatchStorage.queryPlayByStreamId(streamId);
 		if ("rtp".equals(app) && !regist ) {
 			if (streamInfo!=null){
-				storager.stopPlay(streamInfo);
+				redisCatchStorage.stopPlay(streamInfo);
 			}else{
-				streamInfo = storager.queryPlaybackByStreamId(streamId);
-				storager.stopPlayback(streamInfo);
+				streamInfo = redisCatchStorage.queryPlaybackByStreamId(streamId);
+				redisCatchStorage.stopPlayback(streamInfo);
 			}
 		}
 
@@ -281,12 +285,12 @@ public class ZLMHttpHookListener {
 		String streamId = json.getString("stream");
 
 		cmder.streamByeCmd(streamId);
-		StreamInfo streamInfo = storager.queryPlayByStreamId(streamId);
+		StreamInfo streamInfo = redisCatchStorage.queryPlayByStreamId(streamId);
 		if (streamInfo!=null){
-			storager.stopPlay(streamInfo);
+			redisCatchStorage.stopPlay(streamInfo);
 		}else{
-			streamInfo = storager.queryPlaybackByStreamId(streamId);
-			storager.stopPlayback(streamInfo);
+			streamInfo = redisCatchStorage.queryPlaybackByStreamId(streamId);
+			redisCatchStorage.stopPlayback(streamInfo);
 		}
 		
 		JSONObject ret = new JSONObject();
@@ -311,7 +315,8 @@ public class ZLMHttpHookListener {
 		if (autoApplyPlay) {
 			String app = json.getString("app");
 			String streamId = json.getString("stream");
-			if ("rtp".equals(app) && streamId.indexOf("gb_play") > -1) {
+				StreamInfo streamInfo = redisCatchStorage.queryPlayByStreamId(streamId);
+			if ("rtp".equals(app) && streamId.indexOf("gb_play") > -1 && streamInfo == null) {
 				String[] s = streamId.split("_");
 				if (s.length == 4) {
 					String deviceId = s[2];
@@ -322,7 +327,7 @@ public class ZLMHttpHookListener {
 						cmder.playStreamCmd(device, channelId, (JSONObject response) -> {
 							logger.info("收到订阅消息： " + response.toJSONString());
 							playService.onPublishHandlerForPlay(response, deviceId, channelId, uuid.toString());
-						});
+						}, null);
 					}
 
 				}
@@ -354,7 +359,7 @@ public class ZLMHttpHookListener {
 //		MediaServerConfig mediaServerConfig = mediaServerConfigs.get(0);
 		MediaServerConfig mediaServerConfig = JSON.toJavaObject(json, MediaServerConfig.class);
 		mediaServerConfig.setLocalIP(mediaIp);
-		storager.updateMediaInfo(mediaServerConfig);
+		redisCatchStorage.updateMediaInfo(mediaServerConfig);
 		// TODO Auto-generated method stub
 		
 		JSONObject ret = new JSONObject();
