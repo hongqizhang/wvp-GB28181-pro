@@ -52,7 +52,7 @@
 					<el-table-column label="操作" width="240" align="center" fixed="right">
 						<template slot-scope="scope">
 							<el-button size="mini" :ref="scope.row.deviceId + 'refbtn' " icon="el-icon-refresh"  @click="refDevice(scope.row)">刷新通道</el-button>
-							<el-button size="mini" icon="el-icon-s-open"  type="primary" @click="showChannelList(scope.row)">查看通道</el-button>
+							<el-button size="mini" icon="el-icon-s-open" v-bind:disabled="scope.row.online==0"  type="primary" @click="showChannelList(scope.row)">查看通道</el-button>
 						</template>
 					</el-table-column>
 				</el-table>
@@ -134,7 +134,7 @@
 				this.getDeviceListLoading = true;
 				this.$axios.get(`/api/devices`,{
 					params: {
-						page: that.currentPage - 1,
+						page: that.currentPage,
 						count: that.count
 					}
 				} )
@@ -182,6 +182,7 @@
 							type: 'success'
 						});
 					}
+					that.initData()
 					that.$refs[itemData.deviceId + 'refbtn' ].loading = false;
 				}).catch(function(e) {
 					console.error(e)

@@ -39,8 +39,6 @@ public class ApiStreamController {
     @Autowired
     private IRedisCatchStorage redisCatchStorage;
 
-    private boolean closeWaitRTPInfo = false;
-
 
     @Autowired
     private ZLMRESTfulUtils zlmresTfulUtils;
@@ -170,6 +168,7 @@ public class ApiStreamController {
         }
         cmder.streamByeCmd(streamInfo.getStreamId());
         redisCatchStorage.stopPlay(streamInfo);
+        storager.stopPlay(streamInfo.getDeviceID(), streamInfo.getChannelId());
         return null;
     }
 

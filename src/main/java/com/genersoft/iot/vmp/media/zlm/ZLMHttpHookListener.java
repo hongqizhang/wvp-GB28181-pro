@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,6 +68,9 @@ public class ZLMHttpHookListener {
 
 	@Value("${media.ip}")
 	private String mediaIp;
+
+	@Value("${media.wanIp}")
+	private String mediaWanIp;
 
 	@Value("${media.port}")
 	private int mediaPort;
@@ -257,6 +261,7 @@ public class ZLMHttpHookListener {
 		if ("rtp".equals(app) && !regist ) {
 			if (streamInfo!=null){
 				redisCatchStorage.stopPlay(streamInfo);
+				storager.stopPlay(streamInfo.getDeviceID(), streamInfo.getChannelId());
 			}else{
 				streamInfo = redisCatchStorage.queryPlaybackByStreamId(streamId);
 				redisCatchStorage.stopPlayback(streamInfo);
@@ -288,6 +293,7 @@ public class ZLMHttpHookListener {
 		StreamInfo streamInfo = redisCatchStorage.queryPlayByStreamId(streamId);
 		if (streamInfo!=null){
 			redisCatchStorage.stopPlay(streamInfo);
+			storager.stopPlay(streamInfo.getDeviceID(), streamInfo.getChannelId());
 		}else{
 			streamInfo = redisCatchStorage.queryPlaybackByStreamId(streamId);
 			redisCatchStorage.stopPlayback(streamInfo);
@@ -358,6 +364,7 @@ public class ZLMHttpHookListener {
 //		List<MediaServerConfig> mediaServerConfigs = JSON.parseArray(JSON.toJSONString(json), MediaServerConfig.class);
 //		MediaServerConfig mediaServerConfig = mediaServerConfigs.get(0);
 		MediaServerConfig mediaServerConfig = JSON.toJavaObject(json, MediaServerConfig.class);
+		mediaServerConfig.setWanIp(StringUtils.isEmpty(mediaWanIp)? mediaIp: mediaWanIp);
 		mediaServerConfig.setLocalIP(mediaIp);
 		redisCatchStorage.updateMediaInfo(mediaServerConfig);
 		// TODO Auto-generated method stub

@@ -83,6 +83,16 @@ public class VideoManagerStoragerImpl implements IVideoManagerStorager {
 		}
 	}
 
+	@Override
+	public void startPlay(String deviceId, String channelId, String streamId) {
+		deviceChannelMapper.startPlay(deviceId, channelId, streamId);
+	}
+
+	@Override
+	public void stopPlay(String deviceId, String channelId) {
+		deviceChannelMapper.stopPlay(deviceId, channelId);
+	}
+
 	/**
 	 * 获取设备
 	 *
@@ -101,8 +111,6 @@ public class VideoManagerStoragerImpl implements IVideoManagerStorager {
 		List<DeviceChannel> all = deviceChannelMapper.queryChannelsByDeviceId(deviceId, null, query, hasSubChannel, online);
 		return new PageInfo<>(all);
 	}
-
-
 
 	@Override
 	public List<DeviceChannel> queryChannelsByDeviceId(String deviceId) {

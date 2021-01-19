@@ -77,6 +77,9 @@ public class SIPCommander implements ISIPCommander {
 	@Value("${media.seniorSdp}")
 	private boolean seniorSdp;
 
+	@Value("${media.autoApplyPlay}")
+	private boolean autoApplyPlay;
+
 	@Autowired
 	private ZLMHttpHookSubscribe subscribe;
 
@@ -182,12 +185,11 @@ public class SIPCommander implements ISIPCommander {
    /**
 	* 云台指令码计算 
 	*
-    * @param leftRight  镜头左移右移 0:停止 1:左移 2:右移
-    * @param upDown     镜头上移下移 0:停止 1:上移 2:下移
-    * @param inOut      镜头放大缩小 0:停止 1:缩小 2:放大
-    * @param moveSpeed  镜头移动速度 默认 0XFF (0-255)
-    * @param zoomSpeed  镜头缩放速度 默认 0X1 (0-255)
-    */
+	 * @param cmdCode 		指令码
+	 * @param parameter1	数据1
+	 * @param parameter2	数据2
+	 * @param combineCode2	组合码2
+	 */
     public static String frontEndCmdString(int cmdCode, int parameter1, int parameter2, int combineCode2) {
 		StringBuilder builder = new StringBuilder("A50F01");
 		String strTmp;
@@ -209,13 +211,13 @@ public class SIPCommander implements ISIPCommander {
 	/**
 	 * 云台控制，支持方向与缩放控制
 	 * 
-	 * @param device  控制设备
-	 * @param channelId  预览通道
-	 * @param leftRight  镜头左移右移 0:停止 1:左移 2:右移
-     * @param upDown     镜头上移下移 0:停止 1:上移 2:下移
-     * @param inOut      镜头放大缩小 0:停止 1:缩小 2:放大
-     * @param moveSpeed  镜头移动速度
-     * @param zoomSpeed  镜头缩放速度
+	 * @param device  	控制设备
+	 * @param channelId	预览通道
+	 * @param leftRight	镜头左移右移 0:停止 1:左移 2:右移
+     * @param upDown	镜头上移下移 0:停止 1:上移 2:下移
+     * @param inOut		镜头放大缩小 0:停止 1:缩小 2:放大
+     * @param moveSpeed	镜头移动速度
+     * @param zoomSpeed	镜头缩放速度
 	 */
 	@Override
 	public boolean ptzCmd(Device device, String channelId, int leftRight, int upDown, int inOut, int moveSpeed,
@@ -233,7 +235,7 @@ public class SIPCommander implements ISIPCommander {
 			ptzXml.append("</Info>\r\n");
 			ptzXml.append("</Control>\r\n");
 			
-			Request request = headerProvider.createMessageRequest(device, ptzXml.toString(), "ViaPtzBranch", "FromPtzTag", "ToPtzTag");
+			Request request = headerProvider.createMessageRequest(device, ptzXml.toString(), "ViaPtzBranch", "FromPtzTag", null);
 			
 			transmitRequest(device, request);
 			return true;
@@ -269,7 +271,7 @@ public class SIPCommander implements ISIPCommander {
 			ptzXml.append("</Info>\r\n");
 			ptzXml.append("</Control>\r\n");
 			
-			Request request = headerProvider.createMessageRequest(device, ptzXml.toString(), "ViaPtzBranch", "FromPtzTag", "ToPtzTag");
+			Request request = headerProvider.createMessageRequest(device, ptzXml.toString(), "ViaPtzBranch", "FromPtzTag", null);
 			transmitRequest(device, request);
 			return true;
 		} catch (SipException | ParseException | InvalidArgumentException e) {
@@ -324,34 +326,62 @@ public class SIPCommander implements ISIPCommander {
 			content.append("s=Play\r\n");
 			content.append("c=IN IP4 "+mediaInfo.getWanIp()+"\r\n");
 			content.append("t=0 0\r\n");
-			if("TCP-PASSIVE".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
-			}else if ("TCP-ACTIVE".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
-			}else if("UDP".equals(streamMode)) {
-				content.append("m=video "+ mediaPort +" RTP/AVP 126 125 99 34 98 97 96\r\n");
-			}
-			content.append("a=recvonly\r\n");
-			content.append("a=fmtp:126 profile-level-id=42e01e\r\n");
-			content.append("a=rtpmap:126 H264/90000\r\n");
-			content.append("a=rtpmap:125 H264S/90000\r\n");
-			content.append("a=fmtp:125 profile-level-id=42e01e\r\n");
-			content.append("a=rtpmap:99 MP4V-ES/90000\r\n");
-			content.append("a=fmtp:99 profile-level-id=3\r\n");
-			content.append("a=rtpmap:98 H264/90000\r\n");
-			content.append("a=rtpmap:97 MPEG4/90000\r\n");
-			content.append("a=rtpmap:96 PS/90000\r\n");
-			if("TCP-PASSIVE".equals(streamMode)){ // tcp被动模式
-				content.append("a=setup:passive\r\n");
-				content.append("a=connection:new\r\n");
-			}else if ("TCP-ACTIVE".equals(streamMode)) { // tcp主动模式
-				content.append("a=setup:active\r\n");
-				content.append("a=connection:new\r\n");
-			}
-			content.append("y="+ssrc+"\r\n");//ssrc
 
-//			String fromTag = UUID.randomUUID().toString();
-//			Request request = headerProvider.createInviteRequest(device, channelId, content.toString(), null, fromTag, null, ssrc);
+			if (seniorSdp) {
+				if("TCP-PASSIVE".equals(streamMode)) {
+					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 126 125 99 34 98 97\r\n");
+				}else if ("TCP-ACTIVE".equals(streamMode)) {
+					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 126 125 99 34 98 97\r\n");
+				}else if("UDP".equals(streamMode)) {
+					content.append("m=video "+ mediaPort +" RTP/AVP 96 126 125 99 34 98 97\r\n");
+				}
+				content.append("a=recvonly\r\n");
+				content.append("a=rtpmap:96 PS/90000\r\n");
+				content.append("a=fmtp:126 profile-level-id=42e01e\r\n");
+				content.append("a=rtpmap:126 H264/90000\r\n");
+				content.append("a=rtpmap:125 H264S/90000\r\n");
+				content.append("a=fmtp:125 profile-level-id=42e01e\r\n");
+				content.append("a=rtpmap:99 MP4V-ES/90000\r\n");
+				content.append("a=fmtp:99 profile-level-id=3\r\n");
+				content.append("a=rtpmap:98 H264/90000\r\n");
+				content.append("a=rtpmap:97 MPEG4/90000\r\n");
+				if("TCP-PASSIVE".equals(streamMode)){ // tcp被动模式
+					content.append("a=setup:passive\r\n");
+					content.append("a=connection:new\r\n");
+				}else if ("TCP-ACTIVE".equals(streamMode)) { // tcp主动模式
+					content.append("a=setup:active\r\n");
+					content.append("a=connection:new\r\n");
+				}
+			}else {
+				if("TCP-PASSIVE".equals(streamMode)) {
+					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 98 97\r\n");
+				}else if ("TCP-ACTIVE".equals(streamMode)) {
+					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 98 97\r\n");
+				}else if("UDP".equals(streamMode)) {
+					content.append("m=video "+ mediaPort +" RTP/AVP 96 98 97\r\n");
+				}
+				content.append("a=recvonly\r\n");
+				content.append("a=rtpmap:96 PS/90000\r\n");
+				content.append("a=rtpmap:98 H264/90000\r\n");
+				content.append("a=rtpmap:97 MPEG4/90000\r\n");
+				if("TCP-PASSIVE".equals(streamMode)) { // tcp被动模式
+					content.append("a=setup:passive\r\n");
+					content.append("a=recvonly\r\n");
+					content.append("a=rtpmap:96 PS/90000\r\n");
+					content.append("a=rtpmap:98 H264/90000\r\n");
+					content.append("a=rtpmap:97 MPEG4/90000\r\n");
+					if ("TCP-PASSIVE".equals(streamMode)) { // tcp被动模式
+						content.append("a=setup:passive\r\n");
+						content.append("a=connection:new\r\n");
+					} else if ("TCP-ACTIVE".equals(streamMode)) { // tcp主动模式
+					} else if ("TCP-ACTIVE".equals(streamMode)) { // tcp主动模式
+						content.append("a=setup:active\r\n");
+						content.append("a=connection:new\r\n");
+					}
+				}
+			}
+
+			content.append("y="+ssrc+"\r\n");//ssrc
 
 			Request request = headerProvider.createInviteRequest(device, channelId, content.toString(), null, "live", null, ssrc);
 
@@ -387,7 +417,6 @@ public class SIPCommander implements ISIPCommander {
 
 			subscribe.addSubscribe(ZLMHttpHookSubscribe.HookType.on_publish, subscribeKey, event);
 
-			//
 			StringBuffer content = new StringBuffer(200);
 	        content.append("v=0\r\n");
 	        content.append("o="+sipConfig.getSipId()+" 0 0 IN IP4 "+sipConfig.getSipIp()+"\r\n");
@@ -407,13 +436,14 @@ public class SIPCommander implements ISIPCommander {
 
 			if (seniorSdp) {
 				if("TCP-PASSIVE".equals(streamMode)) {
-					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
+					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 126 125 99 34 98 97\r\n");
 				}else if ("TCP-ACTIVE".equals(streamMode)) {
-					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 126 125 99 34 98 97 96\r\n");
+					content.append("m=video "+ mediaPort +" TCP/RTP/AVP 96 126 125 99 34 98 97\r\n");
 				}else if("UDP".equals(streamMode)) {
-					content.append("m=video "+ mediaPort +" RTP/AVP 126 125 99 34 98 97 96\r\n");
+					content.append("m=video "+ mediaPort +" RTP/AVP 96 126 125 99 34 98 97\r\n");
 				}
 				content.append("a=recvonly\r\n");
+				content.append("a=rtpmap:96 PS/90000\r\n");
 				content.append("a=fmtp:126 profile-level-id=42e01e\r\n");
 				content.append("a=rtpmap:126 H264/90000\r\n");
 				content.append("a=rtpmap:125 H264S/90000\r\n");
@@ -422,7 +452,6 @@ public class SIPCommander implements ISIPCommander {
 				content.append("a=fmtp:99 profile-level-id=3\r\n");
 				content.append("a=rtpmap:98 H264/90000\r\n");
 				content.append("a=rtpmap:97 MPEG4/90000\r\n");
-				content.append("a=rtpmap:96 PS/90000\r\n");
 				if("TCP-PASSIVE".equals(streamMode)){ // tcp被动模式
 					content.append("a=setup:passive\r\n");
 					content.append("a=connection:new\r\n");
@@ -491,16 +520,16 @@ public class SIPCommander implements ISIPCommander {
 			if (dialog == null) {
 				return;
 			}
-
-
-
 			Request byeRequest = dialog.createRequest(Request.BYE);
 			SipURI byeURI = (SipURI) byeRequest.getRequestURI();
 			String vh = transaction.getRequest().getHeader(ViaHeader.NAME).toString();
 			Pattern p = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)\\:(\\d+)");
 			Matcher matcher = p.matcher(vh);
 			if (matcher.find()) {
-				byeURI.setHost(matcher.group(1));
+				String ip = matcher.group(1);
+				byeURI.setHost(ip);
+				String port = matcher.group(2);
+				byeURI.setPort(Integer.parseInt(port));
 			}
 			ViaHeader viaHeader = (ViaHeader) byeRequest.getHeader(ViaHeader.NAME);
 			String protocol = viaHeader.getTransport().toUpperCase();
@@ -636,7 +665,7 @@ public class SIPCommander implements ISIPCommander {
 			catalogXml.append("<DeviceID>" + device.getDeviceId() + "</DeviceID>\r\n");
 			catalogXml.append("</Query>\r\n");
 			
-			Request request = headerProvider.createMessageRequest(device, catalogXml.toString(), "ViaDeviceInfoBranch", "FromDeviceInfoTag", "ToDeviceInfoTag");
+			Request request = headerProvider.createMessageRequest(device, catalogXml.toString(), "ViaDeviceInfoBranch", "FromDeviceInfoTag", null);
 
 			transmitRequest(device, request);
 			
@@ -700,7 +729,6 @@ public class SIPCommander implements ISIPCommander {
 			recordInfoXml.append("</Query>\r\n");
 			
 			Request request = headerProvider.createMessageRequest(device, recordInfoXml.toString(), "ViaRecordInfoBranch", "FromRecordInfoTag", null);
-
 
 			transmitRequest(device, request);
 		} catch (SipException | ParseException | InvalidArgumentException e) {
