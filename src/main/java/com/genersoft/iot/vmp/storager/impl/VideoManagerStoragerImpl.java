@@ -3,23 +3,24 @@ package com.genersoft.iot.vmp.storager.impl;
 import java.util.*;
 
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
+import com.genersoft.iot.vmp.gb28181.bean.MobilePosition;
 import com.genersoft.iot.vmp.storager.dao.DeviceChannelMapper;
 import com.genersoft.iot.vmp.storager.dao.DeviceMapper;
+import com.genersoft.iot.vmp.storager.dao.DeviceMobilePositionMapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
-import org.springframework.util.StringUtils;
 
 /**    
  * @Description:视频设备数据存储-jdbc实现
  * @author: swwheihei
  * @date:   2020年5月6日 下午2:31:42
  */
+@SuppressWarnings("rawtypes")
 @Component
 public class VideoManagerStoragerImpl implements IVideoManagerStorager {
 
@@ -27,7 +28,10 @@ public class VideoManagerStoragerImpl implements IVideoManagerStorager {
     private DeviceMapper deviceMapper;
 
 	@Autowired
-    private DeviceChannelMapper deviceChannelMapper;
+	private DeviceChannelMapper deviceChannelMapper;
+	
+	@Autowired
+	private DeviceMobilePositionMapper deviceMobilePositionMapper;
 
 
 	/**
@@ -178,11 +182,11 @@ public class VideoManagerStoragerImpl implements IVideoManagerStorager {
 	@Override
 	public synchronized boolean online(String deviceId) {
 		Device device = deviceMapper.getDeviceByDeviceId(deviceId);
-		device.setOnline(1);
-		System.out.println("更新设备在线");
 		if (device == null) {
 			return false;
 		}
+		device.setOnline(1);
+		System.out.println("更新设备在线");
 		return deviceMapper.update(device) > 0;
 	}
 
@@ -200,11 +204,49 @@ public class VideoManagerStoragerImpl implements IVideoManagerStorager {
 		return deviceMapper.update(device) > 0;
 	}
 
-
+	/**
+	 * 清空通道
+	 * @param deviceId
+	 */
 	@Override
 	public void cleanChannelsForDevice(String deviceId) {
-		int result = deviceChannelMapper.cleanChannelsByDeviceId(deviceId);
+		deviceChannelMapper.cleanChannelsByDeviceId(deviceId);
 	}
 
+	/**
+	 * 添加Mobile Position设备移动位置
+	 * @param MobilePosition
+	 */
+	@Override
+	public synchronized boolean insertMobilePosition(MobilePosition mobilePosition) {
+		return deviceMobilePositionMapper.insertNewPosition(mobilePosition) > 0;
+	}
 
+	/**
+	 * 查询移动位置轨迹
+	 * @param deviceId
+	 * @param startTime
+	 * @param endTime
+	 */
+	@Override
+	public synchronized List<MobilePosition> queryMobilePositions(String deviceId, String startTime, String endTime) {
+		return deviceMobilePositionMapper.queryPositionByDeviceIdAndTime(deviceId, startTime, endTime);
+	}
+
+	/**
+	 * 查询最新移动位置
+	 * @param deviceId
+	 */
+	@Override
+	public MobilePosition queryLatestPosition(String deviceId) {
+		return deviceMobilePositionMapper.queryLatestPositionByDevice(deviceId);
+	}
+
+	/**
+	 * 删除指定设备的所有移动位置
+	 * @param deviceId
+	 */
+	public int clearMobilePositionsByDeviceId(String deviceId) {
+		return deviceMobilePositionMapper.clearMobilePositionsByDeviceId(deviceId);
+	}
 }

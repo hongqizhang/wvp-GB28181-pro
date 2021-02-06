@@ -8,10 +8,9 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.genersoft.iot.vmp.conf.SipConfig;
@@ -26,6 +25,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.request.impl.ByeRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.CancelRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.InviteRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.MessageRequestProcessor;
+import com.genersoft.iot.vmp.gb28181.transmit.request.impl.NotifyRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.OtherRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.RegisterRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.SubscribeRequestProcessor;
@@ -39,14 +39,14 @@ import com.genersoft.iot.vmp.utils.SpringBeanFactory;
 import com.genersoft.iot.vmp.utils.redis.RedisUtil;
 
 /**    
- * @Description:TODO(这里用一句话描述这个类的作用)   
+ * @Description: SIP信令处理分配   
  * @author: swwheihei
  * @date:   2020年5月3日 下午4:24:37     
  */
 @Component
 public class SIPProcessorFactory {
 	
-	private final static Logger logger = LoggerFactory.getLogger(SIPProcessorFactory.class);
+	// private final static Logger logger = LoggerFactory.getLogger(SIPProcessorFactory.class);
 	
 	@Autowired
 	private SipConfig sipConfig;
@@ -132,7 +132,6 @@ public class SIPProcessorFactory {
 			processor.setRequestEvent(evt);
 			return processor;
 		} else if (Request.MESSAGE.equals(method)) {
-
 			MessageRequestProcessor processor = new MessageRequestProcessor();
 			processor.setRequestEvent(evt);
 			processor.setTcpSipProvider(getTcpSipProvider());
@@ -145,13 +144,27 @@ public class SIPProcessorFactory {
 			processor.setStorager(storager);
 			processor.setRedisCatchStorage(redisCatchStorage);
 			return processor;
+		} else if (Request.NOTIFY.equalsIgnoreCase(method)) {
+			NotifyRequestProcessor processor = new NotifyRequestProcessor();
+			processor.setRequestEvent(evt);
+			processor.setTcpSipProvider(getTcpSipProvider());
+			processor.setUdpSipProvider(getUdpSipProvider());
+			processor.setPublisher(publisher);
+			processor.setRedis(redis);
+			processor.setDeferredResultHolder(deferredResultHolder);
+			processor.setOffLineDetector(offLineDetector);
+			processor.setCmder(cmder);
+			processor.setStorager(storager);
+			processor.setRedisCatchStorage(redisCatchStorage);
+			return processor;
 		} else {
-			return new OtherRequestProcessor();
+			OtherRequestProcessor processor = new OtherRequestProcessor();
+			processor.setRequestEvent(evt);
+			return processor;
 		}
 	}
 	
 	public ISIPResponseProcessor createResponseProcessor(ResponseEvent evt) {
-
 		Response response = evt.getResponse();
 		CSeqHeader cseqHeader = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 		String method = cseqHeader.getMethod();
