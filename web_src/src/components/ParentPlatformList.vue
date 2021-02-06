@@ -39,9 +39,9 @@
             </template>
           </el-table-column>
           <el-table-column prop="deviceGBId" label="设备国标编号" width="240" align="center"></el-table-column>
-          <el-table-column prop="transport" label="流传输模式" width="120" align="center"></el-table-column>
+          <el-table-column prop="transport" label="信令传输模式" width="120" align="center"></el-table-column>
           <el-table-column prop="channelCount" label="通道数" align="center"></el-table-column>
-          
+
           <el-table-column label="操作" width="300" align="center" fixed="right">
             <template slot-scope="scope">
               <el-button size="mini" icon="el-icon-edit" @click="editPlatform(scope.row)">编辑</el-button>
@@ -61,6 +61,7 @@
           :total="total">
         </el-pagination>
       <platformEdit ref="platformEdit" ></platformEdit>
+      <chooseChannelDialog ref="chooseChannelDialog" ></chooseChannelDialog>
       </el-main>
     </el-container>
   </div>
@@ -69,11 +70,13 @@
 <script>
 import platformEdit from './platformEdit.vue'
 import uiHeader from './UiHeader.vue'
+import chooseChannelDialog from './gb28181/chooseChannel.vue'
 export default {
   name: 'app',
   components: {
     platformEdit,
-    uiHeader
+    uiHeader,
+    chooseChannelDialog
   },
   data() {
     return {
@@ -86,8 +89,9 @@ export default {
     };
   },
   computed: {
+
     getcurrentDeviceChannels: function() {
-      
+
     }
   },
   mounted() {
@@ -133,7 +137,9 @@ export default {
             });
     },
     chooseChannel: function(platform) {
-
+       this.$refs.chooseChannelDialog.openDialog(platform.serverGBId, ()=>{
+         this.initData()
+       })
     },
     initData: function() {
       this.getPlatformList();
@@ -149,10 +155,10 @@ export default {
     getPlatformList: function() {
       let that = this;
 
-      this.$axios.get(`/api/platforms/${that.count}/${that.currentPage - 1}`)
+      this.$axios.get(`/api/platforms/${that.count}/${that.currentPage}`)
         .then(function (res) {
           that.total = res.data.total;
-          that.platformList = res.data.data;
+          that.platformList = res.data.list;
         })
         .catch(function (error) {
           console.log(error);

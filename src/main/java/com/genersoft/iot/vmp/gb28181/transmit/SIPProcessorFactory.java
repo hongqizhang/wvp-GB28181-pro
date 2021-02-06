@@ -4,11 +4,19 @@ import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.SipProvider;
 import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.Header;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommanderFroPlatform;
+import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
+import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.alibaba.fastjson.JSON;
 import com.genersoft.iot.vmp.gb28181.transmit.response.impl.*;
+import com.genersoft.iot.vmp.gb28181.transmit.response.impl.*;
+import com.genersoft.iot.vmp.gb28181.event.SipSubscribe;
+import com.genersoft.iot.vmp.vmanager.service.IPlayService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +40,10 @@ import com.genersoft.iot.vmp.gb28181.transmit.request.impl.OtherRequestProcessor
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.RegisterRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.request.impl.SubscribeRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.response.ISIPResponseProcessor;
+import com.genersoft.iot.vmp.gb28181.transmit.response.impl.ByeResponseProcessor;
+import com.genersoft.iot.vmp.gb28181.transmit.response.impl.CancelResponseProcessor;
+import com.genersoft.iot.vmp.gb28181.transmit.response.impl.InviteResponseProcessor;
+import com.genersoft.iot.vmp.gb28181.transmit.response.impl.OtherResponseProcessor;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
 import com.genersoft.iot.vmp.utils.SpringBeanFactory;
 import com.genersoft.iot.vmp.utils.redis.RedisUtil;
@@ -54,12 +66,18 @@ public class SIPProcessorFactory {
 	
 	@Autowired
 	private IVideoManagerStorager storager;
-	
+
+	@Autowired
+	private IRedisCatchStorage redisCatchStorage;
+
 	@Autowired
 	private EventPublisher publisher;
 	
 	@Autowired
 	private SIPCommander cmder;
+
+	@Autowired
+	private SIPCommanderFroPlatform cmderFroPlatform;
 	
 	@Autowired
 	private RedisUtil redis;
@@ -82,10 +100,18 @@ public class SIPProcessorFactory {
 	@Autowired
 	@Lazy
 	private RegisterResponseProcessor registerResponseProcessor;
-	
+
+
 	@Autowired
 	private OtherResponseProcessor otherResponseProcessor;
-	
+
+	@Autowired
+	private IPlayService playService;
+
+	@Autowired
+	private ZLMRTPServerFactory zlmrtpServerFactory;
+
+
 	// 注：这里使用注解会导致循环依赖注入，暂用springBean
 	private SipProvider tcpSipProvider;
 		
@@ -101,6 +127,12 @@ public class SIPProcessorFactory {
 			processor.setRequestEvent(evt);
 			processor.setTcpSipProvider(getTcpSipProvider());
 			processor.setUdpSipProvider(getUdpSipProvider());
+
+			processor.setCmder(cmder);
+			processor.setCmderFroPlatform(cmderFroPlatform);
+			processor.setPlayService(playService);
+			processor.setStorager(storager);
+			processor.setZlmrtpServerFactory(zlmrtpServerFactory);
 			return processor;
 		} else if (Request.REGISTER.equals(method)) {
 			RegisterRequestProcessor processor = new RegisterRequestProcessor();
@@ -139,7 +171,9 @@ public class SIPProcessorFactory {
 			processor.setDeferredResultHolder(deferredResultHolder);
 			processor.setOffLineDetector(offLineDetector);
 			processor.setCmder(cmder);
+			processor.setCmderFroPlatform(cmderFroPlatform);
 			processor.setStorager(storager);
+			processor.setRedisCatchStorage(redisCatchStorage);
 			return processor;
 		} else {
 			return new OtherRequestProcessor();
@@ -147,6 +181,7 @@ public class SIPProcessorFactory {
 	}
 	
 	public ISIPResponseProcessor createResponseProcessor(ResponseEvent evt) {
+
 		Response response = evt.getResponse();
 		CSeqHeader cseqHeader = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 		String method = cseqHeader.getMethod();

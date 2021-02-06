@@ -20,7 +20,17 @@ public class VideoManagerConstants {
 
 	public static final String PLAY_BLACK_PREFIX = "VMP_playback_";
 
-	public static final String PLATFORM_PREFIX = "VMP_platform_";
+	public static final String PLATFORM_PREFIX = "VMP_platform";
+
+	public static final String PLATFORM_KEEPLIVEKEY_PREFIX = "VMP_platform_keeplive_";
+
+	public static final String PLATFORM_CATCH_PREFIX = "VMP_platform_catch_";
+
+	public static final String PLATFORM_REGISTER_PREFIX = "VMP_platform_register_";
+
+	public static final String PLATFORM_REGISTER_INFO_PREFIX = "VMP_platform_register_info_";
+
+	public static final String Pattern_Topic = "VMP_keeplive_platform_";
 
 	public static final String EVENT_ONLINE_REGISTER = "1";
 	

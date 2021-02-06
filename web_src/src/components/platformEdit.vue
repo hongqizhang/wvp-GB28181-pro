@@ -45,7 +45,7 @@
                 <el-input v-model="platform.username"></el-input>
               </el-form-item>
               <el-form-item label="SIP认证密码" prop="password">
-                <el-input v-model="platform.password" type="password"></el-input>
+                <el-input v-model="platform.password" ></el-input>
               </el-form-item>
               <el-form-item label="注册周期(秒)" prop="expires">
                 <el-input v-model="platform.expires"></el-input>
@@ -74,7 +74,7 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="其他选项">
-                <el-checkbox label="启用" v-model="platform.enable"></el-checkbox>
+                <el-checkbox label="启用" v-model="platform.enable" @change="checkExpires"></el-checkbox>
                 <el-checkbox label="云台控制" v-model="platform.PTZEnable"></el-checkbox>
                 <el-checkbox label="RTCP保活" v-model="platform.rtcp"></el-checkbox>
               </el-form-item>
@@ -200,6 +200,7 @@ export default {
         this.platform = platform;
         this.onSubmit_text = "保存";
       } else {
+        this.onSubmit_text = "立即创建";
       }
     },
     onSubmit: function () {
@@ -245,12 +246,17 @@ export default {
         });
       return result;
     },
+    checkExpires: function() {
+      if (this.platform.enable && this.platform.expires == "0") {
+        this.platform.expires = "300";
+      }
+    }
   },
 };
 </script>
 
 <style>
-.control-wrapper {
+.control-wrapper-not-used {
   position: relative;
   width: 6.25rem;
   height: 6.25rem;

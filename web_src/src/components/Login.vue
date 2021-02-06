@@ -62,7 +62,7 @@ export default {
       //设置在登录状态
       this.isLoging = true;
 
-      this.$axios.get("/auth/login",{
+      this.$axios.get("/api/user/login",{
         params: loginParam
       } )
       .then(function (res) {
@@ -71,6 +71,13 @@ export default {
             that.$cookies.set("session", {"username": that.username}) ;
             //登录成功后
             that.$router.push('/');
+          }else{
+            that.isLoging = false;
+            that.$message({
+                  showClose: true,
+                  message: '登录失败，用户名或密码错误',
+                  type: 'error'
+              });
           }
       })
       .catch(function (error) {

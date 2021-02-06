@@ -33,15 +33,16 @@ https://gitee.com/18010473990/wvp-GB28181.git
 16. 支持直接输出RTSP、RTMP、HTTP-FLV、Websocket-FLV、HLS多种协议流地址  
 17. 支持国标网络校时  
 18. 支持公网部署, 支持wvp与zlm分开部署   
-19. 支持播放h265, g.711格式的流(需要将closeWaitRTPInfo设为false). 
+19. 支持播放h265, g.711格式的流(需要将closeWaitRTPInfo设为false)
+20. 报警信息处理，支持向前端推送报警信息
 
 # 2.0 支持特性 
 - [ ] 国标通道向上级联  
     - [X] WEB添加上级平台
     - [X] 注册
-    - [ ] 心跳保活
-    - [ ] 通道选择
-    - [ ] 通道推送
+    - [X] 心跳保活
+    - [X] 通道选择
+    - [X] 通道推送
     - [ ] 点播
     - [ ] 云台控制
 - [ ] 添加RTSP视频  

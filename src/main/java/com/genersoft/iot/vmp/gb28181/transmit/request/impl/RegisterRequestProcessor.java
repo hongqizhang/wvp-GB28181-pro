@@ -16,6 +16,8 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import com.genersoft.iot.vmp.gb28181.bean.WvpSipDate;
+import gov.nist.javax.sip.header.SIPDateHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -25,7 +27,6 @@ import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.gb28181.auth.DigestServerAuthenticationHelper;
 import com.genersoft.iot.vmp.gb28181.auth.RegisterLogicHandler;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
-import com.genersoft.iot.vmp.gb28181.bean.Host;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.transmit.request.SIPRequestAbstractProcessor;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
@@ -88,7 +89,12 @@ public class RegisterRequestProcessor extends SIPRequestAbstractProcessor {
 			else if (passwordCorrect) {
 				response = getMessageFactory().createResponse(Response.OK, request);
 				// 添加date头
-				response.addHeader(getHeaderFactory().createDateHeader(Calendar.getInstance(Locale.ENGLISH)));
+				SIPDateHeader dateHeader = new SIPDateHeader();
+				// 使用自己修改的
+				WvpSipDate wvpSipDate = new WvpSipDate(Calendar.getInstance(Locale.ENGLISH).getTimeInMillis());
+				dateHeader.setDate(wvpSipDate);
+				response.addHeader(dateHeader);
+
 				ExpiresHeader expiresHeader = (ExpiresHeader) request.getHeader(Expires.NAME);
 				// 添加Contact头
 				response.addHeader(request.getHeader(ContactHeader.NAME));
@@ -107,17 +113,15 @@ public class RegisterRequestProcessor extends SIPRequestAbstractProcessor {
 					rPort = viaHeader.getPort();
 				}
 				//
-				Host host = new Host();
-				host.setIp(received);
-				host.setPort(rPort);
-				host.setAddress(received.concat(":").concat(String.valueOf(rPort)));
 				AddressImpl address = (AddressImpl) fromHeader.getAddress();
 				SipUri uri = (SipUri) address.getURI();
 				String deviceId = uri.getUser();
 				device = new Device();
 				device.setStreamMode("UDP");
 				device.setDeviceId(deviceId);
-				device.setHost(host);
+				device.setIp(received);
+				device.setPort(rPort);
+				device.setHostAddress(received.concat(":").concat(String.valueOf(rPort)));
 				// 注销成功
 				if (expiresHeader != null && expiresHeader.getExpires() == 0) {
 					registerFlag = 2;
@@ -141,9 +145,15 @@ public class RegisterRequestProcessor extends SIPRequestAbstractProcessor {
 			// 下发catelog查询目录
 			if (registerFlag == 1 && device != null) {
 				logger.info("注册成功! deviceId:" + device.getDeviceId());
+				boolean exists = storager.exists(device.getDeviceId());
+				device.setRegisterTimeMillis(System.currentTimeMillis());
 				storager.updateDevice(device);
 				publisher.onlineEventPublish(device.getDeviceId(), VideoManagerConstants.EVENT_ONLINE_REGISTER);
-				handler.onRegister(device);
+
+				// 重新注册更新设备和通道，以免设备替换或更新后信息无法更新
+				//if (!exists) {
+					handler.onRegister(device);
+				//}
 			} else if (registerFlag == 2) {
 				logger.info("注销成功! deviceId:" + device.getDeviceId());
 				publisher.outlineEventPublish(device.getDeviceId(), VideoManagerConstants.EVENT_OUTLINE_UNREGISTER);

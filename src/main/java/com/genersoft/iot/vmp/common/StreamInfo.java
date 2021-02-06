@@ -4,10 +4,9 @@ import com.alibaba.fastjson.JSONArray;
 
 public class StreamInfo {
 
-    private String ssrc;
     private String streamId;
     private String deviceID;
-    private String cahnnelId;
+    private String channelId;
     private String flv;
     private String ws_flv;
     private String fmp4;
@@ -20,14 +19,6 @@ public class StreamInfo {
     private String rtsp;
     private JSONArray tracks;
 
-    public String getSsrc() {
-        return ssrc;
-    }
-
-    public void setSsrc(String ssrc) {
-        this.ssrc = ssrc;
-    }
-
     public String getDeviceID() {
         return deviceID;
     }
@@ -36,12 +27,12 @@ public class StreamInfo {
         this.deviceID = deviceID;
     }
 
-    public String getCahnnelId() {
-        return cahnnelId;
+    public String getChannelId() {
+        return channelId;
     }
 
-    public void setCahnnelId(String cahnnelId) {
-        this.cahnnelId = cahnnelId;
+    public void setChannelId(String channelId) {
+        this.channelId = channelId;
     }
 
     public String getFlv() {

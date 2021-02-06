@@ -3,13 +3,15 @@ package com.genersoft.iot.vmp.storager;
 import java.util.List;
 import java.util.Map;
 
-import com.alibaba.fastjson.JSONObject;
-import com.genersoft.iot.vmp.common.PageResult;
 import com.genersoft.iot.vmp.common.StreamInfo;
-import com.genersoft.iot.vmp.conf.MediaServerConfig;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
+import com.genersoft.iot.vmp.vmanager.platform.bean.ChannelReduce;
+import com.github.pagehelper.PageInfo;
+import gov.nist.javax.sip.stack.NioTcpMessageProcessor;
+
+import javax.swing.event.ChangeEvent;
 
 /**    
  * @Description:视频设备数据存储接口
@@ -17,19 +19,6 @@ import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
  * @date:   2020年5月6日 下午2:14:31     
  */
 public interface IVideoManagerStorager {
-
-	/**
-	 * 更新流媒体信息
-	 * @param mediaServerConfig
-	 * @return
-	 */
-	public boolean updateMediaInfo(MediaServerConfig mediaServerConfig);
-
-	/**
-	 * 获取流媒体信息
-	 * @return
-	 */
-	public MediaServerConfig getMediaInfo();
 
 	/**   
 	 * 根据设备ID判断设备是否存在
@@ -62,6 +51,21 @@ public interface IVideoManagerStorager {
 	 * @param channel 通道
 	 */
 	public void updateChannel(String deviceId, DeviceChannel channel);
+
+	/**
+	 * 开始播放
+	 * @param deviceId 设备id
+	 * @param channelId 通道ID
+	 * @param streamId 流地址
+	 */
+	public void startPlay(String deviceId, String channelId, String streamId);
+
+	/**
+	 * 停止播放
+	 * @param deviceId 设备id
+	 * @param channelId 通道ID
+	 */
+	public void stopPlay(String deviceId, String channelId);
 	
 	/**   
 	 * 获取设备
@@ -79,7 +83,7 @@ public interface IVideoManagerStorager {
 	 * @param count 每页数量
 	 * @return
 	 */
-	public PageResult queryChannelsByDeviceId(String deviceId, String query, Boolean hasSubChannel, String online, int page, int count);
+	public PageInfo queryChannelsByDeviceId(String deviceId, String query, Boolean hasSubChannel, Boolean online, int page, int count);
 
 	/**
 	 * 获取某个设备的通道列表
@@ -88,6 +92,7 @@ public interface IVideoManagerStorager {
 	 * @return
 	 */
 	public List<DeviceChannel> queryChannelsByDeviceId(String deviceId);
+
 	/**
 	 * 获取某个设备的通道
 	 * @param deviceId 设备ID
@@ -95,21 +100,20 @@ public interface IVideoManagerStorager {
 	 */
 	public DeviceChannel queryChannel(String deviceId, String channelId);
 
-	/**   
+	/**
 	 * 获取多个设备
-	 * 
-	 * @param deviceIds 设备ID数组
+	 * @param page 当前页数
+	 * @param count 每页数量
 	 * @return List<Device> 设备对象数组
 	 */
-	public PageResult<Device> queryVideoDeviceList(String[] deviceIds, int page, int count);
+	public PageInfo<Device> queryVideoDeviceList(int page, int count);
 
 	/**
 	 * 获取多个设备
 	 *
-	 * @param deviceIds 设备ID数组
 	 * @return List<Device> 设备对象数组
 	 */
-	public List<Device> queryVideoDeviceList(String[] deviceIds);
+	public List<Device> queryVideoDeviceList();
 
 	/**   
 	 * 删除设备
@@ -135,27 +139,6 @@ public interface IVideoManagerStorager {
 	 */
 	public boolean outline(String deviceId);
 
-	/**
-	 * 开始播放时将流存入
-	 *
-	 * @param stream 流信息
-	 * @return
-	 */
-	public boolean startPlay(StreamInfo stream);
-
-	/**
-	 * 停止播放时删除
-	 *
-	 * @return
-	 */
-	public boolean stopPlay(StreamInfo streamInfo);
-
-	/**
-	 * 查找视频流
-	 *
-	 * @return
-	 */
-	public StreamInfo queryPlay(StreamInfo streamInfo);
 
 	/**
 	 * 查询子设备
@@ -166,12 +149,8 @@ public interface IVideoManagerStorager {
 	 * @param count
 	 * @return
 	 */
-    PageResult querySubChannels(String deviceId, String channelId, String query, Boolean hasSubChannel, String online, int page, int count);
+	PageInfo querySubChannels(String deviceId, String channelId, String query, Boolean hasSubChannel, String online, int page, int count);
 
-	/**
-	 * 更新缓存
-	 */
-	public void updateCatch();
 
 	/**
 	 * 清空通道
@@ -179,25 +158,19 @@ public interface IVideoManagerStorager {
 	 */
 	void cleanChannelsForDevice(String deviceId);
 
-	StreamInfo queryPlayBySSRC(String ssrc);
-
-	StreamInfo queryPlayByDevice(String deviceId, String code);
-
-	Map<String, StreamInfo> queryPlayByDeviceId(String deviceId);
-
-	boolean startPlayback(StreamInfo streamInfo);
-
-	boolean stopPlayback(StreamInfo streamInfo);
-
-	StreamInfo queryPlaybackByDevice(String deviceId, String channelId);
-
-	StreamInfo queryPlaybackBySSRC(String ssrc);
 
 	/**
-	 * 更新或添加上级平台
+	 * 更新上级平台
 	 * @param parentPlatform
 	 */
 	boolean updateParentPlatform(ParentPlatform parentPlatform);
+
+
+	/**
+	 * 添加上级平台
+	 * @param parentPlatform
+	 */
+	boolean addParentPlatform(ParentPlatform parentPlatform);
 
 	/**
 	 * 删除上级平台
@@ -212,12 +185,55 @@ public interface IVideoManagerStorager {
 	 * @param count
 	 * @return
 	 */
-	public PageResult<ParentPlatform> queryParentPlatformList(int page, int count);
+	PageInfo<ParentPlatform> queryParentPlatformList(int page, int count);
+
+	/**
+	 * 获取所有已启用的平台
+	 * @return
+	 */
+	List<ParentPlatform> queryEnableParentPlatformList(boolean enable);
 
 	/**
 	 * 获取上级平台
 	 * @param platformGbId
 	 * @return
 	 */
-	public ParentPlatform queryParentPlatById(String platformGbId);
+	ParentPlatform queryParentPlatById(String platformGbId);
+
+	/**
+	 * 所有平台离线
+	 */
+	void outlineForAllParentPlatform();
+
+	/**
+	 * 查询通道信息，不区分设备(已关联平台或全部)
+	 */
+	PageInfo<ChannelReduce> queryAllChannelList(int page, int count, String query, Boolean online, Boolean channelType, String platformId, Boolean inPlatform);
+
+	/**
+	 * 查询设备的通道信息
+	 */
+	List<ChannelReduce> queryChannelListInParentPlatform(String platformId);
+
+
+	/**
+	 * 更新上级平台的通道信息
+	 * @param platformId
+	 * @param channelReduces
+	 * @return
+	 */
+	int updateChannelForGB(String platformId, List<ChannelReduce> channelReduces);
+
+	/**
+	 *  移除上级平台的通道信息
+	 * @param platformId
+	 * @param channelReduces
+	 * @return
+	 */
+	int delChannelForGB(String platformId, List<ChannelReduce> channelReduces);
+
+
+    DeviceChannel queryChannelInParentPlatform(String platformId, String channelId);
+
+    Device queryVideoDeviceByPlatformIdAndChannelId(String platformId, String channelId);
 }

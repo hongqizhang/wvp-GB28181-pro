@@ -1,6 +1,6 @@
 <template>
 <div id="devicePlayer" v-loading="isLoging">
-    
+
     <el-dialog title="视频播放" top="0" :close-on-click-modal="false" :visible.sync="showVideoDialog" :destroy-on-close="true" @close="close()">
         <!-- <LivePlayer v-if="showVideoDialog" ref="videoPlayer" :videoUrl="videoUrl" :error="videoError" :message="videoError" :hasaudio="hasaudio" fluent autoplay live></LivePlayer> -->
         <player ref="videoPlayer" :visible.sync="showVideoDialog" :videoUrl="videoUrl" :error="videoError" :message="videoError" :hasaudio="hasaudio" fluent autoplay live></player>
@@ -64,9 +64,13 @@
                             <div class="control-round">
                                 <div class="control-round-inner"><i class="fa fa-pause-circle"></i></div>
                             </div>
-                            <div style="position: absolute; left: 7.25rem; top: 1.25rem" @mousedown="ptzCamera(0, 0, 1)" @mouseup="ptzCamera(0, 0, 0)"><i class="el-icon-zoom-in" style="font-size: 1.875rem;"></i></div>
-                            <div style="position: absolute; left: 7.25rem; top: 3.25rem; font-size: 1.875rem;" @mousedown="ptzCamera(0, 0, 2)" @mouseup="ptzCamera(0, 0, 0)"><i class="el-icon-zoom-out"></i></div>
+                            <div style="position: absolute; left: 7.25rem; top: 1.25rem" @mousedown="ptzCamera(0, 0, 1)" @mouseup="ptzCamera(0, 0, 0)"><i class="el-icon-zoom-in control-zoom-btn" style="font-size: 1.875rem;"></i></div>
+                            <div style="position: absolute; left: 7.25rem; top: 3.25rem; font-size: 1.875rem;" @mousedown="ptzCamera(0, 0, 2)" @mouseup="ptzCamera(0, 0, 0)"><i class="el-icon-zoom-out control-zoom-btn"></i></div>
+                             <div class="contro-speed" style="position: absolute; left: 4px; top: 7rem; width: 9rem;">
+                                 <el-slider v-model="controSpeed" :max="255"></el-slider>
+                             </div>
                         </div>
+                       
                         <div class="control-panel">
                             <el-button-group>
                                 <el-tag style="position :absolute; left: 0rem; top: 0rem; width: 5rem; text-align: center" size="medium" type="info">预置位编号</el-tag>
@@ -121,7 +125,7 @@
                                 <p>采样率: {{item.sample_rate}}</p>
                             </div>
                         </div>
-                        
+
                     </div>
 
                 </el-tab-pane>
@@ -158,7 +162,6 @@ export default {
                 searchHistoryResult: [] //媒体流历史记录搜索结果
             },
             showVideoDialog: false,
-            ssrc: '',
             streamId: '',
             convertKey: '',
             deviceId: '',
@@ -168,6 +171,7 @@ export default {
             loadingRecords: false,
             recordsLoading: false,
             isLoging: false,
+            controSpeed: 30,
             timeVal: 0,
             timeMin: 0,
             timeMax: 1440,
@@ -179,7 +183,8 @@ export default {
             scanGroup: 0,
             tracks: [],
             coverPlaying:false,
-            tracksLoading: false
+            tracksLoading: false,
+            recordPlay: ""
         };
     },
     methods: {
@@ -210,7 +215,6 @@ export default {
             this.tabActiveName = tab;
             this.channelId = channelId;
             this.deviceId = deviceId;
-            this.ssrc = "";
             this.streamId = "";
             this.videoUrl = ""
             if (!!this.$refs.videoPlayer) {
@@ -234,11 +238,10 @@ export default {
             console.log(val)
         },
         play: function (streamInfo, hasAudio) {
-            
+
             this.hasaudio = hasAudio;
             this.isLoging = false;
             this.videoUrl = streamInfo.ws_flv;
-            this.ssrc = streamInfo.ssrc;
             this.streamId = streamInfo.streamId;
             this.playFromStreamInfo(false, streamInfo)
         },
@@ -248,7 +251,7 @@ export default {
             this.$refs.videoPlayer.pause()
             that.$axios({
                 method: 'post',
-                url: '/api/play/' + that.ssrc + '/convert'
+                url: '/api/play/' + that.streamId + '/convert'
                 }).then(function (res) {
                     if (res.data.code == 0) {
                         that.convertKey = res.data.key;
@@ -316,8 +319,12 @@ export default {
               this.convertStop();
             }
             this.convertKey = ''
+            if (this.recordPlay != '') {
+              this.stopPlayRecord();
+            }
+            this.recordPlay = ''
         },
-        
+
         copySharedInfo: function (data) {
             console.log('复制内容：' + data);
             this.coverPlaying = false;
@@ -368,9 +375,9 @@ export default {
         },
         playRecord: function (row) {
             let that = this;
-            if (that.ssrc != "") {
+            if (that.streamId != "") {
                 that.stopPlayRecord(function () {
-                    that.ssrc = "",
+                    that.streamId = "",
                         that.playRecord(row);
                 })
             } else {
@@ -380,8 +387,9 @@ export default {
                         row.endTime
                 }).then(function (res) {
                     var streamInfo = res.data;
-                    that.ssrc = streamInfo.ssrc;
+                    that.streamId = streamInfo.streamId;
                     that.videoUrl = streamInfo.ws_flv;
+                    that.recordPlay = true;
                 });
             }
         },
@@ -390,7 +398,7 @@ export default {
             this.videoUrl = '';
             this.$axios({
                 method: 'get',
-                url: '/api/playback/' + this.ssrc + '/stop'
+                url: '/api/playback/' + this.streamId + '/stop'
             }).then(function (res) {
                 if (callback) callback()
             });
@@ -402,7 +410,7 @@ export default {
                 method: 'post',
                 // url: '/api/ptz/' + this.deviceId + '/' + this.channelId + '?leftRight=' + leftRight + '&upDown=' + upDown +
                 //     '&inOut=' + zoom + '&moveSpeed=50&zoomSpeed=50'
-                url: '/api/ptz/' + this.deviceId + '/' + this.channelId + '?cmdCode=' + (zoom * 16 + upDown * 4 + leftRight) + '&horizonSpeed=30&verticalSpeed=30&zoomSpeed=' + (2 * 16)
+                url: '/api/ptz/' + this.deviceId + '/' + this.channelId + '?cmdCode=' + (zoom * 16 + upDown * 4 + leftRight) + '&horizonSpeed=' + this.controSpeed + '&verticalSpeed=' + this.controSpeed + '&zoomSpeed=' + this.controSpeed
             }).then(function (res) {});
         },
         //////////////////////播放器事件处理//////////////////////////
@@ -493,7 +501,7 @@ export default {
     max-width: 6.25rem;
     max-height: 6.25rem;
     border-radius: 100%;
-    margin-top: 2.5rem;
+    margin-top: 1.5rem;
     margin-left: 0.5rem;
     float: left;
 }
@@ -517,6 +525,9 @@ export default {
     box-sizing: border-box;
     transition: all 0.3s linear;
 }
+.control-btn:hover {
+    cursor:pointer
+}
 
 .control-btn i {
     font-size: 20px;
@@ -524,6 +535,12 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+.control-btn i:hover {
+    cursor:pointer
+}
+.control-zoom-btn:hover {
+    cursor:pointer
 }
 
 .control-round {
